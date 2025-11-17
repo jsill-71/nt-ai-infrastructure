@@ -1,0 +1,51 @@
+# Prometheus Configuration - Phase 3 Week 2 Task 2.4
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # NT-AI Platform services
+  - job_name: 'nt-ai-platform'
+    static_configs:
+      - targets:
+        - 'auth-service:8000'
+        - 'knowledge-graph-service:8000'
+        - 'observability-service:8000'
+    metrics_path: '/metrics'
+
+  # Trinity Platform services
+  - job_name: 'trinity-platform'
+    static_configs:
+      - targets:
+        - 'event-collector:8000'
+        - 'rca-api:8000'
+        - 'investigation-api:8000'
+        - 'kg-projector:9090'
+
+  # Infrastructure
+  - job_name: 'infrastructure'
+    static_configs:
+      - targets:
+        - 'postgres-exporter:9187'
+        - 'neo4j:2004'
+        - 'nats:7777'
+        - 'redis-exporter:9121'
+
+  # Container Apps (Azure)
+  - job_name: 'azure-container-apps'
+    azure_sd_configs:
+      - subscription_id: "${AZURE_SUBSCRIPTION_ID}"
+        resource_group: "nt-ai-platform"
+    relabel_configs:
+      - source_labels: [__meta_azure_machine_name]
+        target_label: instance
+
+# Alerting rules
+rule_files:
+  - 'alerts/*.yml'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+      - targets: ['alertmanager:9093']
